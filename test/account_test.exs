@@ -1,5 +1,4 @@
 defmodule AccountTest do
-
   use ExUnit.Case, async: true
 
   alias Account

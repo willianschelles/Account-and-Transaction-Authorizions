@@ -8,7 +8,7 @@ defmodule Account do
           active_card: boolean(),
           available_limit: integer()
         }
-  defstruct active_card: nil, available_limit: nil
+  defstruct [:active_card, :available_limit]
 
   @spec create(keyword()) :: {:error, any} | {:ok, pid}
   @doc """
