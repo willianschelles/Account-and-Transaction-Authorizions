@@ -17,12 +17,23 @@ defmodule Account do
   def create(state) do
     active_card = Keyword.get(state, :active_card)
     available_limit = Keyword.get(state, :available_limit)
+    account_id = Keyword.get(state, :account_id)
 
     Agent.start_link(
       fn ->
         %Account{active_card: active_card, available_limit: available_limit}
       end,
-      name: Account
+      name: account_id || Account
     )
+  end
+
+  @spec get(atom()) :: boolean() | integer()
+  def get(key) do
+    Agent.get(Account, &Map.get(&1, key))
+  end
+
+  @spec update(atom(), boolean() | integer()) :: :ok
+  def update(key, value) do
+    Agent.update(Account, &Map.put(&1, key, value))
   end
 end
