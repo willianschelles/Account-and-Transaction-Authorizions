@@ -5,7 +5,7 @@ defmodule Transaction do
   use Agent
 
   @type t :: %Transaction{
-        merchant: String.t(),
+          merchant: String.t(),
           amount: integer(),
           time: DateTime
         }

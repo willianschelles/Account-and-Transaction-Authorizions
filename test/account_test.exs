@@ -17,7 +17,7 @@ defmodule AccountTest do
 
   describe "create/1" do
     test "creates an Account process with given state and returns its PID" do
-      {:ok, account_pid} = Account.create([account_id: :some_other_account])
+      {:ok, account_pid} = Account.create(account_id: :some_other_account)
       assert is_pid(account_pid)
     end
   end

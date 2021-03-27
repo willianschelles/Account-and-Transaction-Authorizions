@@ -6,5 +6,4 @@ defmodule TransactionTest do
       assert %Transaction{merchant: nil, amount: nil, time: nil} = %Transaction{}
     end
   end
-
 end
