@@ -3,21 +3,26 @@ defmodule Authorizer.Transaction.CheckerTest do
   alias Authorizer.{Account, Transaction}
   alias Authorizer.Transaction.Checker, as: TransactionChecker
 
-  describe "verify/2 returns empty violantion list" do
-    # test "when no violation occurs" do
-    #   {:ok, supervisor_pid} =
-    #     DynamicSupervisor.start_child(
-    #       Authorizer.DynamicSupervisor,
-    #       {Account, [name: :transaction_checker_test]}
-    #     )
+  describe "verify/2 returns empty violation list" do
+    test "when no violation occurs" do
+      account_attrs = [name: :card_inactive, active_card: true, available_limit: 100]
 
-    #   transaction = %Transaction{}
-    #   violations = []
+      {:ok, account_pid} =
+        DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
 
-    #   transaction = %Transaction{}
-    #   violations = []
-    #   assert [] = TransactionChecker.verify(transaction, violations)
-    # end
+      {:ok, datetime_one, _} = DateTime.from_iso8601("2019-02-13T10:00:00.000Z")
+
+      transaction = %Transaction{
+        account_pid: account_pid,
+        amount: 99,
+        time: datetime_one,
+        merchant: "Dina Pizza"
+      }
+
+      violations = []
+      assert [] = TransactionChecker.verify(transaction, violations)
+      DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
+    end
   end
 
   describe "verify/2 returns filled violation list" do
@@ -95,10 +100,6 @@ defmodule Authorizer.Transaction.CheckerTest do
 
       DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
     end
-
-    #     ● There should not be more than 1 similar transactions (same amount and merchant) i
-    # n a 2 minutes interval: ​doubled-transaction
-    # Examples
 
     test "when there be same amount and merchant in a 2 minutes interval" do
       account_attrs = [name: :doubled_transaction, active_card: true]

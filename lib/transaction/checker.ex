@@ -88,6 +88,7 @@ defmodule Authorizer.Transaction.Checker do
     do: DateTime.diff(time_two, time_one) <= 120
 
   defp take_latest_transactions(nil, _amount), do: []
+
   defp take_latest_transactions(account_pid, amount) do
     account_pid |> Account.get(:transactions) |> Enum.take(amount * -1)
   end
