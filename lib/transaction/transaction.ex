@@ -7,7 +7,8 @@ defmodule Authorizer.Transaction do
   @type t :: %__MODULE__{
           merchant: String.t(),
           amount: integer(),
-          time: DateTime
+          time: DateTime,
+          account_pid: pid()
         }
-  defstruct [:merchant, :amount, :time]
+  defstruct [:merchant, :amount, :time, :account_pid]
 end

@@ -11,7 +11,7 @@ defmodule Authorizer.Account.CheckerTest do
     end
 
     test "returns filled violation list when account already intialized" do
-      {:ok, supervisor_pid} =
+      {:ok, account_pid} =
         DynamicSupervisor.start_child(
           Authorizer.DynamicSupervisor,
           {Account, [name: :account_checker_test]}
@@ -20,7 +20,7 @@ defmodule Authorizer.Account.CheckerTest do
       account = %Account{}
       violations = []
       assert ["account-already-initialized"] = AccountChecker.verify(account, violations)
-      DynamicSupervisor.stop(supervisor_pid)
+      DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
     end
   end
 end
