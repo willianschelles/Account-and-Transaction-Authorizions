@@ -5,7 +5,7 @@ defmodule Authorizer.Account.CheckerTest do
 
   describe "verify/2" do
     test "returns empty violation list" do
-      account = {}
+      account = %Account{}
       violations = []
       assert [] = AccountChecker.verify(account, violations)
     end
@@ -17,7 +17,7 @@ defmodule Authorizer.Account.CheckerTest do
           {Account, [name: :account_checker_test]}
         )
 
-      account = {}
+      account = %Account{}
       violations = []
       assert ["account-already-initialized"] = AccountChecker.verify(account, violations)
       DynamicSupervisor.stop(supervisor_pid)

@@ -1,10 +1,10 @@
-defmodule Transaction do
+defmodule Authorizer.Transaction do
   @moduledoc """
   Documentation for `Transaction`.
   """
   use Agent
 
-  @type t :: %Transaction{
+  @type t :: %__MODULE__{
           merchant: String.t(),
           amount: integer(),
           time: DateTime
