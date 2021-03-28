@@ -7,6 +7,7 @@ defmodule Authorizer.Transaction.Checker do
     |> initialized_account()
     |> active_card(transaction)
     |> excess_amount_limit(transaction)
+    |> high_frequency_small_interval(transaction)
   end
 
   defp initialized_account(violations) do
@@ -38,6 +39,21 @@ defmodule Authorizer.Transaction.Checker do
     if transaction.amount > available_limit,
       do: append_violation(violations, "insufficient-limit"),
       else: violations
+  end
+
+  defp high_frequency_small_interval(violations, transaction)
+  defp high_frequency_small_interval(violations, %Transaction{time: nil}), do: violations
+
+  defp high_frequency_small_interval(violations, %Transaction{} = transaction) do
+    [one, _two, three] = get_last_trhee_transactions(transaction)
+
+    if DateTime.diff(three.time, one.time) <= 120,
+      do: append_violation(violations, "high-frequency-small-interval"),
+      else: violations
+  end
+
+  defp get_last_trhee_transactions(%Transaction{} = transaction) do
+    transaction |> Map.get(:account_pid) |> Account.get(:transactions) |> Enum.take(-3)
   end
 
   defp append_violation(violations, violation), do: List.insert_at(violations, -1, violation)

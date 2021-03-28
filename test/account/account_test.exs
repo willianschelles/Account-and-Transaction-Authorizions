@@ -11,7 +11,7 @@ defmodule AccountTest do
 
   describe "default attributes" do
     test "builds a struct %Account{}" do
-      assert %Account{active_card: nil, available_limit: nil} = %Account{}
+      assert %Account{active_card: nil, available_limit: nil, transactions: []} = %Account{}
     end
   end
 

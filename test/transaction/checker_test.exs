@@ -56,20 +56,36 @@ defmodule Authorizer.Transaction.CheckerTest do
 
     # # There should not be more than 3 transactions on a 2 minute interval:
     # # high-frequency-small-interval
-    # test "when be more than 3 transactions on a 2 minute interval" do
-    #   account_attrs = [name: :high_frequency]
 
-    #   {:ok, account_pid} =
-    #     DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
+    test "when be more than 3 transactions on a 2 minute interval" do
+      {:ok, datetime_zero, _} = DateTime.from_iso8601("2019-02-13T09:59:00.000Z")
+      {:ok, datetime_one, _} = DateTime.from_iso8601("2019-02-13T10:00:00.000Z")
+      {:ok, datetime_two, _} = DateTime.from_iso8601("2019-02-13T10:01:00.000Z")
+      {:ok, datetime_three, _} = DateTime.from_iso8601("2019-02-13T10:02:00.000Z")
 
-    #   transaction = %Transaction{account_pid: account_pid, amount: exceeded_amount}
-    #   violations = []
+      account_attrs = [name: :high_frequency, active_card: true]
 
-    #   assert ["high-frequency-small-interval"] == TransactionChecker.verify(transaction, violations)
-    #   DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
+      {:ok, account_pid} =
+        DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
 
-    #   # "time":
-    #   # "2019-02-13T10:00:00.000Z"}
-    # end
+      transaction = %Transaction{account_pid: account_pid, time: datetime_zero}
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      transaction = %Transaction{account_pid: account_pid, time: datetime_one}
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      transaction = %Transaction{account_pid: account_pid, time: datetime_two}
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      transaction = %Transaction{account_pid: account_pid, time: datetime_three}
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      violations = []
+
+      assert ["high-frequency-small-interval"] ==
+               TransactionChecker.verify(transaction, violations)
+
+      DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
+    end
   end
 end
