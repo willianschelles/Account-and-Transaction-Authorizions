@@ -8,6 +8,7 @@ defmodule Authorizer.Transaction.Checker do
     |> active_card(transaction)
     |> excess_amount_limit(transaction)
     |> high_frequency_small_interval(transaction)
+    |> doubled_transaction(transaction)
   end
 
   defp initialized_account(violations) do
@@ -23,9 +24,9 @@ defmodule Authorizer.Transaction.Checker do
   defp active_card(violations, %Transaction{account_pid: nil}), do: violations
 
   defp active_card(violations, %Transaction{} = transaction) do
-    active_card? = Account.get(transaction.account_pid, :active_card)
+    active_card = Account.get(transaction.account_pid, :active_card)
 
-    if not active_card?,
+    if not active_card,
       do: append_violation(violations, "​card-not-active"),
       else: violations
   end
@@ -45,15 +46,55 @@ defmodule Authorizer.Transaction.Checker do
   defp high_frequency_small_interval(violations, %Transaction{time: nil}), do: violations
 
   defp high_frequency_small_interval(violations, %Transaction{} = transaction) do
-    [one, _two, three] = get_last_trhee_transactions(transaction)
+    latest_transactions = take_latest_transactions(transaction.account_pid, 3)
 
-    if DateTime.diff(three.time, one.time) <= 120,
-      do: append_violation(violations, "high-frequency-small-interval"),
-      else: violations
+    with true <- length(latest_transactions) >= 3,
+         [one, _two, three] <- latest_transactions,
+         true <- is_less_than_two_minutes?(one.time, three.time) do
+      append_violation(violations, "high-frequency-small-interval")
+    else
+      _ -> violations
+    end
   end
 
-  defp get_last_trhee_transactions(%Transaction{} = transaction) do
-    transaction |> Map.get(:account_pid) |> Account.get(:transactions) |> Enum.take(-3)
+  defp doubled_transaction(violations, transaction)
+  # defp doubled_transaction(violations, %Transaction{} = transaction)
+
+  defp doubled_transaction(violations, %Transaction{} = transaction) do
+    latest_transactions = take_latest_transactions(transaction.account_pid, 2)
+
+    with true <- length(latest_transactions) >= 2,
+         [one, two] <- latest_transactions,
+         true <- is_less_than_two_minutes?(one.time, two.time),
+         true <- is_same_merchant_and_amount?(one, two) do
+      append_violation(violations, "doubled-transaction")
+    else
+      _ -> violations
+    end
+
+    # [transaction_one, transaction_two] = take_latest_transactions(transaction, 2)
+
+    # less_than_two_minutes = is_less_than_two_minutes?(transaction_one.time, transaction_two.time)
+    # |>IO.inspect(label: "less_than_two_minutes")
+    # same_merchant_and_amount = is_same_merchant_and_amount?(transaction_one, transaction_two)
+    # |>IO.inspect(label: "same_merchant_and_amount")
+
+    # if less_than_two_minutes and same_merchant_and_amount,
+    #   do: append_violation(violations, "doubled-transaction"),
+    #   else: violations
+  end
+
+  defp is_less_than_two_minutes?(time_one, time_two),
+    do: DateTime.diff(time_two, time_one) <= 120
+
+  defp take_latest_transactions(nil, _amount), do: []
+  defp take_latest_transactions(account_pid, amount) do
+    account_pid |> Account.get(:transactions) |> Enum.take(amount * -1)
+  end
+
+  defp is_same_merchant_and_amount?(transaction_one, transaction_two) do
+    transaction_one.merchant == transaction_two.merchant and
+      transaction_one.amount == transaction_two.amount
   end
 
   defp append_violation(violations, violation), do: List.insert_at(violations, -1, violation)

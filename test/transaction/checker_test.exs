@@ -54,11 +54,7 @@ defmodule Authorizer.Transaction.CheckerTest do
       DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
     end
 
-    # # There should not be more than 3 transactions on a 2 minute interval:
-    # # high-frequency-small-interval
-
-    test "when be more than 3 transactions on a 2 minute interval" do
-      {:ok, datetime_zero, _} = DateTime.from_iso8601("2019-02-13T09:59:00.000Z")
+    test "when be more than 3 transactions on a 2 minutes interval" do
       {:ok, datetime_one, _} = DateTime.from_iso8601("2019-02-13T10:00:00.000Z")
       {:ok, datetime_two, _} = DateTime.from_iso8601("2019-02-13T10:01:00.000Z")
       {:ok, datetime_three, _} = DateTime.from_iso8601("2019-02-13T10:02:00.000Z")
@@ -68,21 +64,75 @@ defmodule Authorizer.Transaction.CheckerTest do
       {:ok, account_pid} =
         DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
 
-      transaction = %Transaction{account_pid: account_pid, time: datetime_zero}
+      transaction = %Transaction{
+        account_pid: account_pid,
+        time: datetime_one,
+        merchant: "some_merchant"
+      }
+
       Account.get_and_update(account_pid, :transactions, transaction)
 
-      transaction = %Transaction{account_pid: account_pid, time: datetime_one}
+      transaction = %Transaction{
+        account_pid: account_pid,
+        time: datetime_two,
+        merchant: "another_merchant"
+      }
+
       Account.get_and_update(account_pid, :transactions, transaction)
 
-      transaction = %Transaction{account_pid: account_pid, time: datetime_two}
-      Account.get_and_update(account_pid, :transactions, transaction)
+      transaction = %Transaction{
+        account_pid: account_pid,
+        time: datetime_three,
+        merchant: "third_one_merchant"
+      }
 
-      transaction = %Transaction{account_pid: account_pid, time: datetime_three}
       Account.get_and_update(account_pid, :transactions, transaction)
 
       violations = []
 
       assert ["high-frequency-small-interval"] ==
+               TransactionChecker.verify(transaction, violations)
+
+      DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
+    end
+
+    #     ● There should not be more than 1 similar transactions (same amount and merchant) i
+    # n a 2 minutes interval: ​doubled-transaction
+    # Examples
+
+    test "when there be same amount and merchant in a 2 minutes interval" do
+      account_attrs = [name: :doubled_transaction, active_card: true]
+
+      {:ok, account_pid} =
+        DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
+
+      {:ok, datetime_one, _} = DateTime.from_iso8601("2019-02-13T10:00:00.000Z")
+      {:ok, datetime_two, _} = DateTime.from_iso8601("2019-02-13T10:02:00.000Z")
+
+      merchant = "Dom Camilo"
+      amount = 76
+
+      transaction = %Transaction{
+        account_pid: account_pid,
+        time: datetime_one,
+        merchant: merchant,
+        amount: amount
+      }
+
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      transaction = %Transaction{
+        account_pid: account_pid,
+        time: datetime_two,
+        merchant: merchant,
+        amount: amount
+      }
+
+      Account.get_and_update(account_pid, :transactions, transaction)
+
+      violations = []
+
+      assert ["doubled-transaction"] ==
                TransactionChecker.verify(transaction, violations)
 
       DynamicSupervisor.terminate_child(Authorizer.DynamicSupervisor, account_pid)
