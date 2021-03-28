@@ -3,25 +3,28 @@ defmodule Authorizer.Transaction.CheckerTest do
   alias Authorizer.Transaction
   alias Authorizer.Transaction.Checker, as: TransactionChecker
 
-  describe "verify/2" do
-    test "returns empty violation list" do
-      transaction = %Transaction{}
-      violations = []
-      assert [] = TransactionChecker.verify(transaction, violations)
-
-    end
-
-    # test "returns filled violation list when Transaction already intialized" do
+  describe "verify/2 returns empty violantion list" do
+    # test "when no violation occurs" do
     #   {:ok, supervisor_pid} =
     #     DynamicSupervisor.start_child(
     #       Authorizer.DynamicSupervisor,
-    #       {Transaction, [name: :transaction_checker_test]}
+    #       {Account, [name: :transaction_checker_test]}
     #     )
 
-    #   transaction = {}
+    #   transaction = %Transaction{}
     #   violations = []
-    #   assert ["Transaction-already-initialized"] = TransactionChecker.verify(transaction, violations)
-    #   DynamicSupervisor.stop(supervisor_pid)
+
+    #   transaction = %Transaction{}
+    #   violations = []
+    #   assert [] = TransactionChecker.verify(transaction, violations)
     # end
+  end
+
+  describe "verify/2 returns filled violation list" do
+    test "when account is not properly initialized" do
+      transaction = %Transaction{}
+      violations = []
+      assert ["account-not-initialized"] = TransactionChecker.verify(transaction, violations)
+    end
   end
 end

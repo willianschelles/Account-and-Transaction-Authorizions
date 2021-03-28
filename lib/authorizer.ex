@@ -17,7 +17,6 @@ defmodule Authorizer do
   def process(event)
 
   def process(%{account: account} = _event) do
-    _account_attrs = [active_card: true, available_limit: 100]
     _violations = Authorizer.Account.Checker.verify(account, [])
 
     # if violations == [] do
@@ -31,7 +30,9 @@ defmodule Authorizer do
     %{}
   end
 
-  def process(%{"transaction" => _transaction} = _event) do
+  def process(%{"transaction" => transaction} = _event) do
+    _violations = Authorizer.Transaction.Checker.verify(transaction, [])
+
     %{}
   end
 

@@ -3,7 +3,8 @@ defmodule TransactionTest do
 
   describe "default attributes" do
     test "builds a struct %Transaction{}" do
-      assert %Authorizer.Transaction{merchant: nil, amount: nil, time: nil} = %Authorizer.Transaction{}
+      assert %Authorizer.Transaction{merchant: nil, amount: nil, time: nil} =
+               %Authorizer.Transaction{}
     end
   end
 end
