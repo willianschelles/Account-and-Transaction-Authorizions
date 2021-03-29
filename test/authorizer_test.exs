@@ -3,7 +3,7 @@ defmodule AuthorizerTest do
   doctest Authorizer
 
   describe "authorize/1 account" do
-    @account_payload %{account: %{"active-card" => true, "available-limit" => 100}}
+    @account_payload %{"account" => %{"active-card" => true, "available-limit" => 100}}
 
     test "returns output with an account state and empty violations when no violation occurs" do
       expected_acount = %Authorizer.Account{active_card: true, available_limit: 100}
@@ -36,7 +36,7 @@ defmodule AuthorizerTest do
 
   describe "authorize/1 transaction" do
     @transaction_payload %{
-      transaction: %{
+      "transaction" => %{
         "merchant" => "Burger King",
         "amount" => 37,
         "time" => "2019-02-13T10:00:00.000Z"
@@ -53,7 +53,7 @@ defmodule AuthorizerTest do
         )
 
       current_available_limit = Keyword.get(account_attrs, :available_limit)
-      transaction_amount = @transaction_payload.transaction["amount"]
+      transaction_amount = @transaction_payload["transaction"]["amount"]
       available_limit_after_transaction = current_available_limit - transaction_amount
 
       expected_acount = %Authorizer.Account{
@@ -78,17 +78,17 @@ defmodule AuthorizerTest do
           {Authorizer.Account, account_attrs}
         )
 
-      {:ok, datetime_one, _} = DateTime.from_iso8601("2019-02-13T10:00:00.000Z")
-      {:ok, datetime_two, _} = DateTime.from_iso8601("2019-02-13T10:01:00.000Z")
-      {:ok, datetime_three, _} = DateTime.from_iso8601("2019-02-13T10:02:00.000Z")
+      datetime_one = "2019-02-13T10:00:00.000Z"
+      datetime_two = "2019-02-13T10:01:00.000Z"
+      datetime_three = "2019-02-13T10:02:00.000Z"
 
-      transaction_payload = put_in(@transaction_payload, [:transaction, "time"], datetime_one)
+      transaction_payload = put_in(@transaction_payload, ["transaction", "time"], datetime_one)
       Authorizer.run(transaction_payload)
 
       transaction_payload =
         @transaction_payload
-        |> put_in([:transaction, "merchant"], "another_one")
-        |> put_in([:transaction, "time"], datetime_two)
+        |> put_in(["transaction", "merchant"], "another_one")
+        |> put_in(["transaction", "time"], datetime_two)
 
       Authorizer.run(transaction_payload)
 
@@ -98,7 +98,7 @@ defmodule AuthorizerTest do
       }
 
       expected_violations = ["insufficient-limit", "high-frequency-small-interval"]
-      transaction_payload = put_in(@transaction_payload, [:transaction, "time"], datetime_three)
+      transaction_payload = put_in(@transaction_payload, ["transaction", "time"], datetime_three)
 
       assert %Output{account: ^expected_acount, violations: ^expected_violations} =
                Authorizer.run(transaction_payload)

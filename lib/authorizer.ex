@@ -4,20 +4,26 @@ defmodule Authorizer do
   """
   use Application
   alias Authorizer.{Account, Transaction}
+  alias Authorizer.Queue.Subscriber, as: AuthorizerSubscriber
 
-  @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Authorizer.DynamicSupervisor}
     ]
 
-    Supervisor.start_link(children, strategy: :one_for_one)
+    {:ok, pid} = Supervisor.start_link(children, strategy: :one_for_one)
+
+    if Mix.env() != :test do
+      AuthorizerSubscriber.start()
+    end
+
+    {:ok, pid}
   end
 
   @spec run(map()) :: map()
   def run(operation)
 
-  def run(%{account: account}) do
+  def run(%{"account" => account}) do
     violations = Authorizer.Account.Checker.verify(account, [])
 
     {:ok, account_pid} =
@@ -31,7 +37,7 @@ defmodule Authorizer do
     %Output{account: account, violations: violations}
   end
 
-  def run(%{transaction: transaction}) do
+  def run(%{"transaction" => transaction}) do
     # move to "subscriber"
     account_pid = get_account_pid()
     transaction = build_transaction(transaction, account_pid)
@@ -73,10 +79,12 @@ defmodule Authorizer do
   end
 
   defp build_transaction(transaction, account_pid) do
+    {:ok, datetime, _} = DateTime.from_iso8601(transaction["time"])
+
     %Transaction{
       merchant: transaction["merchant"],
       amount: transaction["amount"],
-      time: transaction["time"],
+      time: datetime,
       account_pid: account_pid
     }
   end

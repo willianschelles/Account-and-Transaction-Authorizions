@@ -57,9 +57,6 @@ defmodule Authorizer.Transaction.Checker do
     end
   end
 
-  defp doubled_transaction(violations, transaction)
-  # defp doubled_transaction(violations, %Transaction{} = transaction)
-
   defp doubled_transaction(violations, %Transaction{} = transaction) do
     latest_transactions = take_latest_transactions(transaction.account_pid, 1)
 
@@ -71,17 +68,6 @@ defmodule Authorizer.Transaction.Checker do
     else
       _ -> violations
     end
-
-    # [transaction_one, transaction_two] = take_latest_transactions(transaction, 2)
-
-    # less_than_two_minutes = is_less_than_two_minutes?(transaction_one.time, transaction_two.time)
-    # |>IO.inspect(label: "less_than_two_minutes")
-    # same_merchant_and_amount = is_same_merchant_and_amount?(transaction_one, transaction_two)
-    # |>IO.inspect(label: "same_merchant_and_amount")
-
-    # if less_than_two_minutes and same_merchant_and_amount,
-    #   do: append_violation(violations, "doubled-transaction"),
-    #   else: violations
   end
 
   defp is_less_than_two_minutes?(time_one, time_two),

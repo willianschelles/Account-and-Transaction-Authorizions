@@ -91,8 +91,6 @@ defmodule Authorizer.Transaction.CheckerTest do
         merchant: "third_one_merchant"
       }
 
-      # Account.update(account_pid, :transactions, transaction)
-
       violations = []
 
       assert ["high-frequency-small-interval"] ==
