@@ -28,22 +28,25 @@ defmodule Authorizer.Account do
     )
   end
 
+  @spec state(pid()) :: :ok
+  def state(pid) do
+    Agent.get(pid, & &1)
+  end
+
   @spec get(pid(), atom()) :: boolean() | integer()
   def get(pid, key) do
     Agent.get(pid, &Map.get(&1, key))
   end
 
-  @spec update(pid(), atom(), boolean() | integer()) :: :ok
-  def update(pid, key, value) do
-    Agent.update(pid, &Map.put(&1, key, value))
+  @spec update(pid(), atom(), any()) :: :ok
+  def update(pid, :transactions, value) do
+    Agent.update(pid, fn state ->
+      transactions = List.insert_at(state.transactions, -1, value)
+      Map.put(state, :transactions, transactions)
+    end)
   end
 
-  @spec get_and_update(pid(), atom(), any()) :: any
-  def get_and_update(pid, key, value) do
-    Agent.get_and_update(pid, fn state ->
-      transactions = List.insert_at(state.transactions, -1, value)
-      new_state = Map.put(state, :transactions, transactions)
-      {state, new_state}
-    end)
+  def update(pid, key, value) do
+    Agent.update(pid, &Map.put(&1, key, value))
   end
 end

@@ -2,7 +2,7 @@ defmodule Authorizer.Account.Checker do
   alias Authorizer.Account
 
   @spec verify(Account.t(), list()) :: list()
-  def verify(%Account{} = _account, violations) do
+  def verify(_account, violations) do
     violations
     |> account_limit()
   end

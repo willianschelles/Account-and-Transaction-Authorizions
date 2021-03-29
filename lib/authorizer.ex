@@ -5,6 +5,7 @@ defmodule Authorizer do
   use Application
   alias Authorizer.Account
 
+  @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Authorizer.DynamicSupervisor}
@@ -13,29 +14,32 @@ defmodule Authorizer do
     Supervisor.start_link(children, strategy: :one_for_one)
   end
 
-  @spec process(map()) :: map()
-  def process(event)
+  @spec run(map()) :: map()
+  def run(event)
 
-  def process(%{account: account} = _event) do
-    _violations = Authorizer.Account.Checker.verify(account, [])
+  def run(%{account: account}) do
+    violations = Authorizer.Account.Checker.verify(account, [])
 
-    # if violations == [] do
-    #   {:ok, account_pid} =
-    #     DynamicSupervisor.start_child(
-    #       Authorizer.DynamicSupervisor,
-    #       {Account, account_attrs}
-    #     )
-    # end
-
-    %{}
+    with true <- Enum.empty?(violations),
+         {:ok, account_pid} <- create_account(account) do
+      account = Account.state(account_pid)
+      %Output{account_state: account, violations: violations}
+    end
   end
 
-  def process(%{"transaction" => transaction} = _event) do
+  def run(%{transaction: transaction} = _event) do
     _violations = Authorizer.Transaction.Checker.verify(transaction, [])
 
     %{}
   end
 
+  defp create_account(account) do
+    account_attrs = [
+      active_card: account["active-card"],
+      available_limit: account["available-limit"]
+    ]
+    DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
+  end
   # defp execute_operation(operation_type, operation, violations)
 
   # defp execute_operation("account", account, []) do
