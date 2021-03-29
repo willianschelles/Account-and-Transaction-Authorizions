@@ -5,8 +5,8 @@ This application is about to handle one thing: Account State.
 
 To handle this, is provided two operations:
   
-  1 - Account Creation
-  2 - Transaction Authorization
+  - Account Creation
+  - Transaction Authorization
 
 and some business rules for each one.
 
