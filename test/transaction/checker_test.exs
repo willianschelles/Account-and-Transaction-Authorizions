@@ -91,7 +91,7 @@ defmodule Authorizer.Transaction.CheckerTest do
         merchant: "third_one_merchant"
       }
 
-      Account.update(account_pid, :transactions, transaction)
+      # Account.update(account_pid, :transactions, transaction)
 
       violations = []
 
@@ -128,8 +128,6 @@ defmodule Authorizer.Transaction.CheckerTest do
         merchant: merchant,
         amount: amount
       }
-
-      Account.update(account_pid, :transactions, transaction)
 
       violations = []
 

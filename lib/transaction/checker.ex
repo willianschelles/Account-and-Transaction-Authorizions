@@ -46,11 +46,11 @@ defmodule Authorizer.Transaction.Checker do
   defp high_frequency_small_interval(violations, %Transaction{time: nil}), do: violations
 
   defp high_frequency_small_interval(violations, %Transaction{} = transaction) do
-    latest_transactions = take_latest_transactions(transaction.account_pid, 3)
+    latest_transactions = take_latest_transactions(transaction.account_pid, 2)
 
-    with true <- length(latest_transactions) >= 3,
-         [one, _two, three] <- latest_transactions,
-         true <- is_less_than_two_minutes?(one.time, three.time) do
+    with true <- length(latest_transactions) >= 2,
+         [one, _two] <- latest_transactions,
+         true <- is_less_than_two_minutes?(one.time, transaction.time) do
       append_violation(violations, "high-frequency-small-interval")
     else
       _ -> violations
@@ -61,12 +61,12 @@ defmodule Authorizer.Transaction.Checker do
   # defp doubled_transaction(violations, %Transaction{} = transaction)
 
   defp doubled_transaction(violations, %Transaction{} = transaction) do
-    latest_transactions = take_latest_transactions(transaction.account_pid, 2)
+    latest_transactions = take_latest_transactions(transaction.account_pid, 1)
 
-    with true <- length(latest_transactions) >= 2,
-         [one, two] <- latest_transactions,
-         true <- is_less_than_two_minutes?(one.time, two.time),
-         true <- is_same_merchant_and_amount?(one, two) do
+    with true <- length(latest_transactions) >= 1,
+         [one] <- latest_transactions,
+         true <- is_less_than_two_minutes?(one.time, transaction.time),
+         true <- is_same_merchant_and_amount?(one, transaction) do
       append_violation(violations, "doubled-transaction")
     else
       _ -> violations
