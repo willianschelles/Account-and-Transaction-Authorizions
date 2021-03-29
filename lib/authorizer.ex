@@ -2,23 +2,7 @@ defmodule Authorizer do
   @moduledoc """
   Documentation for `Authorizer`.
   """
-  use Application
   alias Authorizer.{Account, Transaction}
-  alias Authorizer.Queue.Subscriber, as: AuthorizerSubscriber
-
-  def start(_type, _args) do
-    children = [
-      {DynamicSupervisor, strategy: :one_for_one, name: Authorizer.DynamicSupervisor}
-    ]
-
-    {:ok, pid} = Supervisor.start_link(children, strategy: :one_for_one)
-
-    if Mix.env() != :test do
-      AuthorizerSubscriber.start()
-    end
-
-    {:ok, pid}
-  end
 
   @spec run(map()) :: map()
   def run(operation)

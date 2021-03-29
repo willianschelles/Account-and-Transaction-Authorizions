@@ -19,7 +19,6 @@ defmodule Authorizer.Transaction.Checker do
       else: violations
   end
 
-  ## THINK nil case
   defp active_card(violations, transaction)
   defp active_card(violations, %Transaction{account_pid: nil}), do: violations
 

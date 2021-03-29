@@ -1,13 +1,19 @@
 defmodule Authorizer.Queue.Subscriber do
-  def start() do
-    output_stream = File.stream!("output")
+  use Agent
 
-    _input_stream =
-      "operations"
-      |> File.stream!()
-      |> process()
-      |> Stream.into(output_stream)
-      |> Stream.run()
+  def start_link(_opts) do
+    if Mix.env() != :test do
+      output_stream = File.stream!("output")
+
+      _input_stream =
+        "operations"
+        |> File.stream!()
+        |> process()
+        |> Stream.into(output_stream)
+        |> Stream.run()
+    end
+
+    Agent.start_link(fn -> %{} end)
   end
 
   defp process(events) do
