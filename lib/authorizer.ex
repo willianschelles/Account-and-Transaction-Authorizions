@@ -3,7 +3,7 @@ defmodule Authorizer do
   Documentation for `Authorizer`.
   """
   use Application
-  alias Authorizer.Account
+  alias Authorizer.{Account, Transaction}
 
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
@@ -15,7 +15,7 @@ defmodule Authorizer do
   end
 
   @spec run(map()) :: map()
-  def run(event)
+  def run(operation)
 
   def run(%{account: account}) do
     violations = Authorizer.Account.Checker.verify(account, [])
@@ -23,14 +23,36 @@ defmodule Authorizer do
     with true <- Enum.empty?(violations),
          {:ok, account_pid} <- create_account(account) do
       account = Account.state(account_pid)
-      %Output{account_state: account, violations: violations}
+      %Output{account: account, violations: violations}
     end
   end
 
-  def run(%{transaction: transaction} = _event) do
-    _violations = Authorizer.Transaction.Checker.verify(transaction, [])
+  def run(%{transaction: transaction}) do
+    # move to "subscriber"
 
-    %{}
+    [{_, account_pid, _, _}] = DynamicSupervisor.which_children(Authorizer.DynamicSupervisor)
+
+    transaction = %Transaction{
+      merchant: transaction["merchant"],
+      amount: transaction["amount"],
+      time: transaction["time"],
+      account_pid: account_pid
+    }
+
+    violations = Authorizer.Transaction.Checker.verify(transaction, [])
+
+    with true <- Enum.empty?(violations),
+         :ok <- execute_transaction(transaction) do
+      account = Account.state(account_pid)
+
+      %Output{
+        account: %Account{
+          active_card: account.active_card,
+          available_limit: account.available_limit
+        },
+        violations: violations
+      }
+    end
   end
 
   defp create_account(account) do
@@ -38,17 +60,14 @@ defmodule Authorizer do
       active_card: account["active-card"],
       available_limit: account["available-limit"]
     ]
+
     DynamicSupervisor.start_child(Authorizer.DynamicSupervisor, {Account, account_attrs})
   end
-  # defp execute_operation(operation_type, operation, violations)
 
-  # defp execute_operation("account", account, []) do
-  #   account_attrs = [active_card: account.active_card, available_limit: account.available_limit]
-  #   Supervisor.count_children(account_ipid)
-  #   children = [
-  #     Supervisor.child_spec({Account, account_attrs}, id: :my_worker_1)
-  #   ]
-
-  #   {:ok, account_ipid} = Supervisor.start_link(children, strategy: :one_for_one)
-  # end
+  defp execute_transaction(%Transaction{} = transaction) do
+    current_available_limit = Account.get(transaction.account_pid, :available_limit)
+    new_available_limit = current_available_limit - transaction.amount
+    Account.update(transaction.account_pid, :available_limit, new_available_limit)
+    Account.update(transaction.account_pid, :transactions, transaction)
+  end
 end
