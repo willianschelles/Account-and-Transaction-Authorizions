@@ -31,6 +31,7 @@ I have used some "features" from the conecptual Actors Model, which has your imp
 Once the application is dockerized, we need to:
 
 `$ docker build -t authorizer .`
+
 `$ docker run -it authorizer /bin/sh`
 
 and then, to run tests:
