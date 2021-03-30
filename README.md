@@ -15,6 +15,8 @@ When application starts (`Authorizer.Application.start/2`) is spawned two child 
 
 When the `Subscriber` process is started, it consumes from the event stream, and for each one, calls the `Authorizer` to `run/1` that event. The `Authorizer` module then checks if operation contains violations of the business rules (actually who do this job is the `Authorizer.{Account, Transaction}.Checker`), and if no violation is found, the operation is executed and the account state + violations is published (write_output/1).
 
+**note**: Has a simplified application flow in PDF attached.
+
 ## Design Decisions
 I decided to read the file as a `Stream` to simulate a real scenario of event coming up, and consuming this event in a fake "Subscriber", which will call the application to process the event and publish the result (write account state + violations to the output file). Instead of read all the file once, load to memory and process after that.
 
