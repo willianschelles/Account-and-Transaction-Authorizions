@@ -43,5 +43,6 @@ to run application:
 `/opt $ MIX_ENV=dev mix run`
 
 to read from output file with state account + violations:
+
 `/opt $ cat output`
 
