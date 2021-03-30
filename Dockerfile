@@ -10,3 +10,5 @@ RUN apk update && \
 
 WORKDIR /opt
 COPY . /opt
+
+RUN mix do deps.get, deps.compile, compile
