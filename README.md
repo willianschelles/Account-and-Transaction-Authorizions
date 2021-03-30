@@ -46,3 +46,5 @@ to read from output file with state account + violations:
 
 `/opt $ cat output`
 
+
+**note**: * the lib I am using to decode / encode the json file is using some deprecated function and, due to this, some `Warnings` are appearing in the output when compiling the application, I saw this late, unfortunately *
